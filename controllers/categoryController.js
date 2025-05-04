@@ -1,16 +1,14 @@
-import { StoreInfo } from "../models/sellerStoreInfo.model.js"; 
 import cloudinary from "../config/cloudinary.js";
 import fs from "fs";
-import cloudinary from "cloudinary";
-import fs from "fs";
 import { Category } from "../models/category.model.js";
+import { sendResponse } from "../common/index.js";
 
 
 export const createCategory = async (req, res) => {
     try {
       const { name } = req.body;
-      const createdBy = req._id;
-  
+      const createdBy = req.id;
+      
       // ✅ Validation: name is required
       if (!name || name.trim() === "") {
         return sendResponse(res, 400, false, "Category name is required");
@@ -69,60 +67,58 @@ export const getCategories = async (req, res) => {
 };  
 
 export const updateCategory = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { name } = req.body;
-      const updatedBy = req._id;
-  
-      // ✅ Validation: category ID is required
-      if (!id) {
-        return sendResponse(res, 400, false, "Category ID is required");
-      }
-  
-      // ✅ Validation: name is required
-      if (!name || name.trim() === "") {
-        return sendResponse(res, 400, false, "Category name is required");
-      }
-  
-      // Check if category exists
-      const category = await Category.findById(id);
-      if (!category) {
-        return sendResponse(res, 404, false, "Category not found");
-      }
-  
-      let imageUrl = category.image;
-  
-      // If new image is uploaded
-      if (req.files && req.files["image"]) {
-        const imagePath = req.files["image"][0].path;
-  
-        // Upload image to Cloudinary
-        const imageResult = await cloudinary.uploader.upload(imagePath, {
-          folder: "uploads/categories/images",
-          resource_type: "image",
-        });
-  
-        imageUrl = imageResult.secure_url;
-        fs.unlinkSync(imagePath); // Remove the local file after upload
-      }
-  
-      // Update the category
-      category.name = name;
-      category.image = imageUrl;
-      category.updatedBy = updatedBy;
-  
-      await category.save();
-  
-      return sendResponse(res, 200, true, "Category updated successfully", category);
-    } catch (error) {
-      return sendResponse(res, 500, false, "Server error", { error: error.message });
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const updatedBy = req.id;
+
+    // ✅ Validate: Category ID is required
+    if (!id) {
+      return sendResponse(res, 400, false, "Category ID is required");
     }
+
+    // ✅ Check if category exists
+    const category = await Category.findById(id);
+    if (!category) {
+      return sendResponse(res, 404, false, "Category not found");
+    }
+
+    let imageUrl = category.image;
+
+    // ✅ If a new image is uploaded
+    if (req.files && req.files["image"]) {
+      const imagePath = req.files["image"][0].path;
+
+      // Upload image to Cloudinary
+      const imageResult = await cloudinary.uploader.upload(imagePath, {
+        folder: "uploads/categories/images",
+        resource_type: "image",
+      });
+
+      imageUrl = imageResult.secure_url;
+      fs.unlinkSync(imagePath); // Remove local file after upload
+      category.image = imageUrl;
+    }
+
+    // ✅ Update fields only if they are provided
+    if (name && name.trim() !== "") {
+      category.name = name;
+    }
+
+    category.updatedBy = updatedBy;
+
+    await category.save();
+
+    return sendResponse(res, 200, true, "Category updated successfully", category);
+  } catch (error) {
+    return sendResponse(res, 500, false, "Server error", { error: error.message });
+  }
 };
   
 export const deleteCategory = async (req, res) => {
     try {
       const { id } = req.params;
-      const deletedBy = req._id;
+      const deletedBy = req.id;
   
       // Validate category ID
       if (!id) {
