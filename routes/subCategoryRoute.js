@@ -1,7 +1,7 @@
 import express from "express";
 import upload from "../middleware/multer.middleware.js";
 import isUserAuthenticated from "../middleware/isUserAuthenticated.js";
-import { createSubCategory, getSubcategories } from "../controllers/subCategoryController.js";
+import { createSubcategory, deleteSubcategory, getSubcategories, updateSubcategory } from "../controllers/subCategoryController.js";
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ router.post(
   upload.fields([
     { name: "image", maxCount: 1 }
   ]),
-  createSubCategory
+  createSubcategory
 ); 
 
 router.get("/list-sub-category", isUserAuthenticated, getSubcategories);

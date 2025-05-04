@@ -6,6 +6,8 @@ import connectDB from "./config/database.js";
 import verifyRoute from "./routes/verifyRoute.js";
 import adminRoute from "./routes/adminRoute.js";
 import storeRoute from "./routes/storeInfoRoute.js";
+import categoryRoute from "./routes/categoryRoute.js";
+import subCategoryRoute from "./routes/subCategoryRoute.js"
 import path from "path";
 import fs from "fs";
 
@@ -42,6 +44,8 @@ app.use("/uploads", express.static("uploads"));
 // Routes
 app.use("/api/v1/auth", verifyRoute);
 app.use("/api/v1/admin", adminRoute);
+app.use("/api/v1/category",categoryRoute);
+app.use("/api/v1/subCategory",subCategoryRoute);
 app.use("/api/v1/store", storeRoute);
 
 
