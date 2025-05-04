@@ -23,15 +23,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// const corsOption = {
-//   origin: "http://localhost:3000",
-//   credentials: true,
-// };
-
 const corsOption = {
-  origin: "*",
+  origin: "http://localhost:3000",
   credentials: true,
 };
+
+// const corsOption = {
+//   origin: "*",
+//   credentials: true,
+// };
 
 
 app.use(cors(corsOption));

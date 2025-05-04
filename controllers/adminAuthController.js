@@ -1,7 +1,7 @@
 import { AdminAuth } from "../models/admin.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-
+import {sendResponse} from "../common/index.js"
 export const signup = async (req, res) => {
   console.log("Req: ", req.body);
   try {
@@ -9,20 +9,17 @@ export const signup = async (req, res) => {
     
     const { firstName, lastName, email, password } = req.body;
     if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      return sendResponse(res, 400, false, "All fields are required");
     }
 
     const admin = await AdminAuth.findOne({ "userAuth.email": email });
     if (admin) {
-      return res.status(400).json({
-        message: "Admin already exists with this email.",
-        success: false,
-      });
+      return sendResponse(res, 400, false, "Admin already exists with this email.");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await AdminAuth.create({
+    const newAdmin = await AdminAuth.create({
       userInfo: {
         firstName,
         lastName,
@@ -33,16 +30,11 @@ export const signup = async (req, res) => {
       },
     });
 
-    return res.status(201).json({
-      message: "Account created successfully.",
-      success: true,
-    });
+    return sendResponse(res, 201, true, "Account created successfully.", {adminId: newAdmin._id});
+
   } catch (error) {
     console.log(`Sign up admin error: ${error}`);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
+    return sendResponse(res, 500, false, "Internal server error");
   }
 };
 
@@ -51,17 +43,14 @@ export const login = async (req, res) => {
     console.log("Log in admin");
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      return sendResponse(res, 400, false, "All fields are required");
     }
 
     const admin = await AdminAuth.findOne({ "userAuth.email": email }).select(
       "userAuth.password userInfo"
     );
     if (!admin) {
-      return res.status(400).json({
-        message: "Incorrect email",
-        success: false,
-      });
+      return sendResponse(res, 400, false, "Incorrect email");
     }
 
     const isPasswordCorrect = await bcrypt.compare(
@@ -69,10 +58,7 @@ export const login = async (req, res) => {
       admin.userAuth?.password
     );
     if (!isPasswordCorrect) {
-      return res.status(400).json({
-        message: "Incorrect password",
-        success: false,
-      });
+      return sendResponse(res, 400, false, "Incorrect password");
     }
 
     const tokenData = {
@@ -86,25 +72,23 @@ export const login = async (req, res) => {
     });
     console.log("token: ", token);
 
-    return res
-      .status(200)
-      .cookie("token", token, {
-        maxAge: 1 * 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "strict",
-      })
-      .json({
-        _id: admin._id,
-        firstName: admin.userInfo?.firstName,
-        lastName: admin.userInfo?.lastName,
-        email: admin.userAuth?.email,
-      });
+    // Set cookie and send response
+    res.cookie("token", token, {
+      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+      httpOnly: true,
+      sameSite: "strict",
+    });
+
+    return sendResponse(res, 200, true, "Login successful", {
+      _id: admin._id,
+      firstName: admin.userInfo?.firstName,
+      lastName: admin.userInfo?.lastName,
+      email: admin.userAuth?.email,
+      token
+    });
   } catch (error) {
     console.log(`Log in admin error: ${error}`);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
+    return sendResponse(res, 500, false, "Internal server error");
   }
 };
 
@@ -113,15 +97,11 @@ export const logout = (req, res) => {
   try {
       console.log("Inside log out admin try");
 
-    return res.status(200).cookie("token", "", { maxAge: 0 }).json({
-      message: "Logged out successfully",
-    });
+      return sendResponse(res, 200, true, "Logged out successfully");
+
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
+    return sendResponse(res, 500, false, "Internal server error");
   }
 };
 
