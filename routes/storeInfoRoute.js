@@ -12,19 +12,19 @@ const router = express.Router();
 
 // Upload Image and Video Middleware
 router.post(
-  "/add",
+  "/add-store",
   isUserAuthenticated,
   upload.fields([
     { name: "logo", maxCount: 1 },
     { name: "coverPhoto", maxCount: 1 },
   ]),
   addStore
-); // Add new item 
+); 
 
-router.get("/all", isUserAuthenticated, getStores); // Get all items
+router.get("/list-stores", isUserAuthenticated, getStores); 
 
 router.put(
-  "/edit/:id",
+  "/edit-store/:id",
   isUserAuthenticated,
 
   upload.fields([
@@ -34,6 +34,6 @@ router.put(
   updateStore
 ); 
 
-router.delete("/delete/:id", isUserAuthenticated, deleteStore); // Delete item by ID
+router.delete("/delete-store/:id", isUserAuthenticated, deleteStore); // Delete item by ID
 
 export default router;

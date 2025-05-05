@@ -26,18 +26,15 @@ const sellerUserAuthSchema = new mongoose.Schema(
       password: {
         type: String,
         required: true,
-      },
-      otp: {
-        type: String,
-      },
-      otpValid: {
-        type: Date,
-        default: null,
-      },
+      }
     },
     adminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "AdminAuth",
+    },
+    is_deleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
