@@ -73,7 +73,7 @@ export const login = async (req, res) => {
     console.log("token: ", token);
 
     // Set cookie and send response
-    res.cookie("super-admin-token", token, {
+    res.cookie("token", token, {
       maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
       httpOnly: true,
       sameSite: "strict",
@@ -94,7 +94,7 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    res.clearCookie("super-admin-token", {
+    res.clearCookie("token", {
       httpOnly: true,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production", // optional for HTTPS
