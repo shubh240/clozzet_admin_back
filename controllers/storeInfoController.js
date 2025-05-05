@@ -125,21 +125,25 @@ export const addStore = async (req, res) => {
   }
 };
 
+
 export const updateStore = async (req, res) => {
   try {
     const { id: storeId } = req.params;
-    console.log(storeId);
-    
+
     const {
       storeName,
       storeAddress,
-      storeTaxInfo,
       latitude,
       longitude,
       zone,
       mapAddress,
+      limitTime,
+      position,
+      adminId,
+      is_deleted,
     } = req.body;
 
+    // Find the store
     const store = await StoreInfo.findById(storeId);
     if (!store) {
       return sendResponse(res, 404, false, "Store not found");
@@ -170,7 +174,6 @@ export const updateStore = async (req, res) => {
     // Update store fields
     store.storeName = storeName || store.storeName;
     store.storeAddress = storeAddress || store.storeAddress;
-    store.storeTaxInfo = storeTaxInfo || store.storeTaxInfo;
 
     store.storeLocation = {
       latitude: latitude || store.storeLocation?.latitude || "",
@@ -179,11 +182,48 @@ export const updateStore = async (req, res) => {
       mapAddress: mapAddress || store.storeLocation?.mapAddress || "",
     };
 
+    store.limitTime = {
+      minimum: limitTime?.minimum || store.limitTime?.minimum || "",
+      maximum: limitTime?.maximum || store.limitTime?.maximum || "",
+      selectTime: limitTime?.selectTime || store.limitTime?.selectTime || "",
+    };
+
+    store.position = position || store.position;
+
+    store.sellerAuthId = store.sellerAuthId;
+    store.adminId = adminId || store.adminId;
+    store.is_deleted = is_deleted !== undefined ? is_deleted : store.is_deleted;
+
     const updatedStore = await store.save();
 
-    return sendResponse(res, 200, true, "Store updated successfully", {
-      store: updatedStore,
-    });
+    // Now handle seller info update (but skip mobileNo and email)
+    let sellerAuthId = store.sellerAuthId
+    
+    if (sellerAuthId) {
+      const seller = await SellerUserAuth.findById(sellerAuthId);
+      if (!seller) {
+        return sendResponse(res, 404, false, "Seller not found");
+      }
+      
+      const {
+        firstName,
+        lastName
+      } = req.body;
+      
+      seller.userInfo.firstName = firstName || seller.userInfo.firstName;
+      seller.userInfo.lastName = lastName || seller.userInfo.lastName;
+
+      const updatedSeller = await seller.save();
+
+      return sendResponse(res, 200, true, "Store and seller updated successfully", {
+        store: updatedStore,
+        seller: updatedSeller,
+      });
+    } else {
+      return sendResponse(res, 200, true, "Store updated successfully", {
+        store: updatedStore,
+      });
+    }
   } catch (error) {
     console.error("Update store error:", error);
     return sendResponse(res, 500, false, "Internal server error", {
