@@ -73,7 +73,7 @@ export const login = async (req, res) => {
     console.log("token: ", token);
 
     // Set cookie and send response
-    res.cookie("token", token, {
+    res.cookie("super-admin-token", token, {
       maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
       httpOnly: true,
       sameSite: "strict",
@@ -93,16 +93,16 @@ export const login = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-  console.log("Inside log out admin");
   try {
-      console.log("Inside log out admin try");
+    res.clearCookie("super-admin-token", {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production", // optional for HTTPS
+    });
 
-      return sendResponse(res, 200, true, "Logged out successfully");
-
+    return sendResponse(res, 200, true, "Logged out successfully");
   } catch (error) {
-    console.log(error);
+    console.log("Logout error:", error);
     return sendResponse(res, 500, false, "Internal server error");
   }
 };
-
-
