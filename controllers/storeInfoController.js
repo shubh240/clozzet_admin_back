@@ -3,56 +3,83 @@ import { SellerUserAuth } from "../models/sellerUserInfo.model.js";
 import cloudinary from "../config/cloudinary.js";
 import fs from "fs";
 import bcrypt from "bcryptjs";
+import { sendResponse } from "../common/index.js"; 
 
 export const addStore = async (req, res) => {
   try {
     const adminId = req.id;
     console.log(`adminId: ${adminId}`);
 
-    const { firstName, lastName, mobileNo, email, password, confirmPassword } =
-      req.body;
+    const { firstName, lastName, mobileNo, email, password, confirmPassword, storeName, storeAddress, limitTime, position, zone } = req.body;
 
-    console.log({
-      firstName,
-      lastName,
-      mobileNo,
-      email,
-      password,
-      confirmPassword,
-    });
+    console.log({ firstName, lastName, mobileNo, email, password, confirmPassword });
+    console.log({ storeName, storeAddress, position, limitTime, zone });
 
-    if (
-      !firstName ||
-      !lastName ||
-      !mobileNo ||
-      !email ||
-      !password ||
-      !confirmPassword
-    ) {
-      return res.status(400).json({
-        message: "All seller fields are required.",
-        success: false,
-      });
+    // Step 1: Validate all required fields
+    if (!firstName || !lastName || !mobileNo || !email || !password || !confirmPassword || !storeName || !storeAddress) {
+      return sendResponse(res, 400, false, "All required fields (seller + store) must be filled.");
     }
 
-
+    // Step 2: Check passwords match
     if (password !== confirmPassword) {
-      return res.status(400).json({
-        message: "Password and confirm password should be the same.",
-        success: false,
-      });
+      return sendResponse(res, 400, false, "Password and confirm password should be the same.");
     }
 
+    // Step 3: Check if mobile number already exists
     const existingUser = await SellerUserAuth.findOne({
       "userInfo.mobileNo": mobileNo,
     });
     if (existingUser) {
-      return res.status(400).json({
-        message: "Mobile number already registered.",
-        success: false,
-      });
+      return sendResponse(res, 400, false, "Mobile number already registered.");
     }
 
+    // Step 4: Check if store name already exists
+    const gotStore = await StoreInfo.findOne({ storeName });
+    if (gotStore) {
+      return sendResponse(res, 400, false, "Store with this name already exists.");
+    }
+
+    // Step 5: Parse JSON fields safely
+    let parsedPosition = {};
+    let parsedLimitTime = {};
+
+    try {
+      parsedPosition = JSON.parse(position);
+    } catch (e) {
+      return sendResponse(res, 400, false, "Invalid position JSON format.");
+    }
+
+    try {
+      parsedLimitTime = JSON.parse(limitTime);
+    } catch (e) {
+      return sendResponse(res, 400, false, "Invalid limitTime JSON format.");
+    }
+
+    // Step 6: Handle file uploads (logo, coverPhoto)
+    let logoUrl = "";
+    let coverPhotoUrl = "";
+
+    if (req.files["logo"]) {
+      const imagePath = req.files["logo"][0].path;
+      const imageResult = await cloudinary.uploader.upload(imagePath, {
+        folder: "uploads/stores/logos",
+        resource_type: "image",
+      });
+      logoUrl = imageResult.secure_url;
+      fs.unlinkSync(imagePath);
+    }
+
+    if (req.files["coverPhoto"]) {
+      const imagePath = req.files["coverPhoto"][0].path;
+      const imageResult = await cloudinary.uploader.upload(imagePath, {
+        folder: "uploads/stores/coverPhotos",
+        resource_type: "image",
+      });
+      coverPhotoUrl = imageResult.secure_url;
+      fs.unlinkSync(imagePath);
+    }
+
+    // Step 7: Save seller only after validation passes
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newSeller = new SellerUserAuth({
@@ -63,87 +90,7 @@ export const addStore = async (req, res) => {
 
     await newSeller.save();
 
-
-
-    const {
-      storeName,
-      storeAddress,
-      limitTime,
-      position,
-      zone,
-
-    } = req.body;
-
-    console.log({
-      storeName,
-      storeAddress,
-      position,
-      limitTime,
-      zone,
-    });
-
-   // const sellerAuthId = req.id;
-    //console.log(`sellerAuthId: ${sellerAuthId}`);
-
-    // Basic validation
-    if (!storeName || !storeAddress) {
-      return res.status(400).json({ message: "Required fields are missing." });
-    }
-
-    // Check if store name already exists
-    let gotStore = await StoreInfo.findOne({ storeName });
-    if (gotStore) {
-      return res.status(400).json({
-        message: "Store with this name already exists.",
-        success: false,
-      });
-    }
-
-    let parsedPosition = {};
-    let parsedLimitTime = {};
-
-    try {
-      parsedPosition = JSON.parse(position);
-    } catch (e) {
-      console.error("Invalid position JSON");
-    }
-
-    try {
-      parsedLimitTime = JSON.parse(limitTime);
-    } catch (e) {
-      console.error("Invalid limitTime JSON");
-    }
-
-    let logoUrl = "";
-    let coverPhotoUrl = "";
-
-    console.log("Files received:", req.files);
-
-    // Upload logo if available
-
-    if (req.files["logo"]) {
-      const imagePath = req.files["logo"][0].path;
-      const imageResult = await cloudinary.uploader.upload(imagePath, {
-        folder: "uploads/stores/logos",
-        resource_type: "image",
-      });
-      logoUrl = imageResult.secure_url;
-      console.log(`Logo url : ${logoUrl}`);
-      fs.unlinkSync(imagePath); // Delete local file after upload
-    }
-    // Upload cover photo if available
-
-    if (req.files["coverPhoto"]) {
-      const imagePath = req.files["coverPhoto"][0].path;
-      const imageResult = await cloudinary.uploader.upload(imagePath, {
-        folder: "uploads/stores/coverPhotos",
-        resource_type: "image",
-      });
-      coverPhotoUrl = imageResult.secure_url;
-      console.log(`cover photo url : ${coverPhotoUrl}`);
-      fs.unlinkSync(imagePath); // Delete local file after upload
-    }
-
+    // Step 8: Save store
     const newStore = new StoreInfo({
       storeName,
       storeAddress,
@@ -164,27 +111,25 @@ export const addStore = async (req, res) => {
     });
 
     const savedStore = await newStore.save();
-    
-    
 
-    return res
-      .status(201)
-      .json({ message: "Store created successfully", store: savedStore, seller: newSeller, success: true});
+    return sendResponse(res, 201, true, "Store created successfully", {
+      store: savedStore,
+      seller: newSeller,
+    });
+
   } catch (error) {
     console.error("Error creating store:", error);
-    return res
-      .status(500)
-      .json({
-        message: "Internal server error",
-        error: error.message,
-        success: false,
-      });
+    return sendResponse(res, 500, false, "Internal server error", {
+      error: error.message,
+    });
   }
 };
 
 export const updateStore = async (req, res) => {
   try {
-    const { storeId } = req.params;
+    const { id: storeId } = req.params;
+    console.log(storeId);
+    
     const {
       storeName,
       storeAddress,
@@ -197,12 +142,10 @@ export const updateStore = async (req, res) => {
 
     const store = await StoreInfo.findById(storeId);
     if (!store) {
-      return res
-        .status(404)
-        .json({ message: "Store not found", success: false });
+      return sendResponse(res, 404, false, "Store not found");
     }
 
-    // File updates
+    // Handle logo upload
     if (req.files?.logo) {
       const logoPath = req.files.logo[0].path;
       const logoResult = await cloudinary.uploader.upload(logoPath, {
@@ -213,6 +156,7 @@ export const updateStore = async (req, res) => {
       fs.unlinkSync(logoPath);
     }
 
+    // Handle cover photo upload
     if (req.files?.coverPhoto) {
       const coverPath = req.files.coverPhoto[0].path;
       const coverResult = await cloudinary.uploader.upload(coverPath, {
@@ -223,57 +167,102 @@ export const updateStore = async (req, res) => {
       fs.unlinkSync(coverPath);
     }
 
+    // Update store fields
     store.storeName = storeName || store.storeName;
     store.storeAddress = storeAddress || store.storeAddress;
     store.storeTaxInfo = storeTaxInfo || store.storeTaxInfo;
+
     store.storeLocation = {
-      latitude: latitude || store.storeLocation.latitude,
-      longitude: longitude || store.storeLocation.longitude,
-      zone: zone || store.storeLocation.zone,
-      mapAddress: mapAddress || store.storeLocation.mapAddress,
+      latitude: latitude || store.storeLocation?.latitude || "",
+      longitude: longitude || store.storeLocation?.longitude || "",
+      zone: zone || store.storeLocation?.zone || "",
+      mapAddress: mapAddress || store.storeLocation?.mapAddress || "",
     };
 
     const updatedStore = await store.save();
-    res
-      .status(200)
-      .json({ message: "Store updated", store: updatedStore, success: true });
+
+    return sendResponse(res, 200, true, "Store updated successfully", {
+      store: updatedStore,
+    });
   } catch (error) {
     console.error("Update store error:", error);
-    res.status(500).json({ message: "Internal server error", success: false });
+    return sendResponse(res, 500, false, "Internal server error", {
+      error: error.message,
+    });
   }
 };
 
 export const getStores = async (req, res) => {
   try {
-    const adminId = req.id;
-    const stores = await StoreInfo.find({ adminId }).populate("sellerAuthId");
+    let filter = { is_deleted: false }; 
+    const { search = "", zone = "", page = 1, limit = 10 } = req.query;
 
-    res.status(200).json({ stores, success: true });
+    if (search) {
+      filter.storeName = { $regex: search, $options: "i" };
+    }
+
+    if (zone) {
+      filter.zone = zone;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const stores = await StoreInfo.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .populate("sellerAuthId");
+
+    const totalStores = await StoreInfo.countDocuments(filter);
+
+    return sendResponse(res, 200, true, "Stores fetched successfully", {
+      stores,
+      totalStores,
+      totalPages: Math.ceil(totalStores / limit),
+      currentPage: Number(page),
+    });
   } catch (error) {
     console.error("Get stores error:", error);
-    res.status(500).json({ message: "Internal server error", success: false });
+    return sendResponse(res, 500, false, "Internal server error", {
+      error: error.message,
+    });
   }
 };
+
 
 export const deleteStore = async (req, res) => {
   try {
-    const { storeId } = req.params;
+    const { id: storeId } = req.params;
 
-    const store = await StoreInfo.findByIdAndDelete(storeId);
+    const store = await StoreInfo.findByIdAndUpdate(
+      storeId,
+      { is_deleted: true },
+      { new: true }
+    );
+
     if (!store) {
-      return res
-        .status(404)
-        .json({ message: "Store not found", success: false });
+      return sendResponse(res, 404, false, "Store not found");
     }
 
-    res
-      .status(200)
-      .json({ message: "Store deleted successfully", success: true });
+    if (store.sellerAuthId) {
+      await SellerUserAuth.findByIdAndUpdate(
+        store.sellerAuthId,
+        { is_deleted: true }
+      );
+    }
+
+    return sendResponse(res, 200, true, "Store and seller deleted", {
+      storeId,
+      sellerId: store.sellerAuthId,
+    });
   } catch (error) {
     console.error("Delete store error:", error);
-    res.status(500).json({ message: "Internal server error", success: false });
+    return sendResponse(res, 500, false, "Internal server error", {
+      error: error.message,
+    });
   }
 };
+
+
 
 
 

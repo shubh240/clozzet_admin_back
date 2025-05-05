@@ -55,6 +55,7 @@ const SellerStoreInfoSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "AdminAuth",
     },
+    is_deleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
