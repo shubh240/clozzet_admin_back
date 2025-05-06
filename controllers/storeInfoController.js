@@ -10,22 +10,35 @@ export const addStore = async (req, res) => {
     const adminId = req.id;
     console.log(`adminId: ${adminId}`);
 
-    const { firstName, lastName, mobileNo, email, password, confirmPassword, storeName, storeAddress, limitTime, position, zone } = req.body;
+    const {
+      firstName,
+      lastName,
+      mobileNo,
+      email,
+      password,
+      confirmPassword,
+      storeName,
+      storeAddress,
+      limitTime,
+      position,
+      zone,
+      city,
+      state,
+      pincode,
+      address_url,
+    } = req.body;
 
-    console.log({ firstName, lastName, mobileNo, email, password, confirmPassword });
-    console.log({ storeName, storeAddress, position, limitTime, zone });
-
-    // Step 1: Validate all required fields
-    if (!firstName || !lastName || !mobileNo || !email || !password || !confirmPassword || !storeName || !storeAddress) {
+    if (
+      !firstName || !lastName || !mobileNo || !email || !password || !confirmPassword ||
+      !storeName || !storeAddress || !city || !state || !pincode
+    ) {
       return sendResponse(res, 400, false, "All required fields (seller + store) must be filled.");
     }
 
-    // Step 2: Check passwords match
     if (password !== confirmPassword) {
       return sendResponse(res, 400, false, "Password and confirm password should be the same.");
     }
 
-    // Step 3: Check if mobile number already exists
     const existingUser = await SellerUserAuth.findOne({
       "userInfo.mobileNo": mobileNo,
     });
@@ -33,13 +46,11 @@ export const addStore = async (req, res) => {
       return sendResponse(res, 400, false, "Mobile number already registered.");
     }
 
-    // Step 4: Check if store name already exists
     const gotStore = await StoreInfo.findOne({ storeName });
     if (gotStore) {
       return sendResponse(res, 400, false, "Store with this name already exists.");
     }
 
-    // Step 5: Parse JSON fields safely
     let parsedPosition = {};
     let parsedLimitTime = {};
 
@@ -55,7 +66,6 @@ export const addStore = async (req, res) => {
       return sendResponse(res, 400, false, "Invalid limitTime JSON format.");
     }
 
-    // Step 6: Handle file uploads (logo, coverPhoto)
     let logoUrl = "";
     let coverPhotoUrl = "";
 
@@ -79,7 +89,6 @@ export const addStore = async (req, res) => {
       fs.unlinkSync(imagePath);
     }
 
-    // Step 7: Save seller only after validation passes
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newSeller = new SellerUserAuth({
@@ -90,10 +99,13 @@ export const addStore = async (req, res) => {
 
     await newSeller.save();
 
-    // Step 8: Save store
     const newStore = new StoreInfo({
       storeName,
       storeAddress,
+      city,
+      state,
+      pincode,
+      address_url,
       coverPhotoUrl,
       logoUrl,
       adminId,
@@ -125,7 +137,6 @@ export const addStore = async (req, res) => {
   }
 };
 
-
 export const updateStore = async (req, res) => {
   try {
     const { id: storeId } = req.params;
@@ -141,6 +152,12 @@ export const updateStore = async (req, res) => {
       position,
       adminId,
       is_deleted,
+      city,
+      state,
+      pincode,
+      address_url,
+      firstName,
+      lastName,
     } = req.body;
 
     // Find the store
@@ -175,12 +192,13 @@ export const updateStore = async (req, res) => {
     store.storeName = storeName || store.storeName;
     store.storeAddress = storeAddress || store.storeAddress;
 
-    store.storeLocation = {
-      latitude: latitude || store.storeLocation?.latitude || "",
-      longitude: longitude || store.storeLocation?.longitude || "",
-      zone: zone || store.storeLocation?.zone || "",
-      mapAddress: mapAddress || store.storeLocation?.mapAddress || "",
-    };
+    // Update new fields if provided
+    store.city = city || store.city;
+    store.state = state || store.state;
+    store.pincode = pincode || store.pincode;
+    store.address_url = address_url || store.address_url;
+
+    store.position = position || store.position;
 
     store.limitTime = {
       minimum: limitTime?.minimum || store.limitTime?.minimum || "",
@@ -188,28 +206,19 @@ export const updateStore = async (req, res) => {
       selectTime: limitTime?.selectTime || store.limitTime?.selectTime || "",
     };
 
-    store.position = position || store.position;
-
-    store.sellerAuthId = store.sellerAuthId;
+    store.zone = zone || store.zone;
     store.adminId = adminId || store.adminId;
     store.is_deleted = is_deleted !== undefined ? is_deleted : store.is_deleted;
 
     const updatedStore = await store.save();
 
     // Now handle seller info update (but skip mobileNo and email)
-    let sellerAuthId = store.sellerAuthId
-    
-    if (sellerAuthId) {
-      const seller = await SellerUserAuth.findById(sellerAuthId);
+    if (store.sellerAuthId) {
+      const seller = await SellerUserAuth.findById(store.sellerAuthId);
       if (!seller) {
         return sendResponse(res, 404, false, "Seller not found");
       }
-      
-      const {
-        firstName,
-        lastName
-      } = req.body;
-      
+
       seller.userInfo.firstName = firstName || seller.userInfo.firstName;
       seller.userInfo.lastName = lastName || seller.userInfo.lastName;
 
@@ -268,7 +277,6 @@ export const getStores = async (req, res) => {
   }
 };
 
-
 export const deleteStore = async (req, res) => {
   try {
     const { id: storeId } = req.params;
@@ -301,8 +309,6 @@ export const deleteStore = async (req, res) => {
     });
   }
 };
-
-
 
 
 

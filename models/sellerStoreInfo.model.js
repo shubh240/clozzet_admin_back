@@ -11,6 +11,23 @@ const SellerStoreInfoSchema = new mongoose.Schema(
       required: true,
     },
 
+    city: {
+      type: String,
+      required: true,
+    },
+    state: {
+      type: String,
+      required: true,
+    },
+    pincode: {
+      type: String,
+      required: true,
+    },
+    address_url: {
+      type: String,
+      default: "",
+    },
+
     coverPhotoUrl: {
       type: String,
       default: "",
