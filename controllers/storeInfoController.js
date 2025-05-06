@@ -46,10 +46,10 @@ export const addStore = async (req, res) => {
       return sendResponse(res, 400, false, "Mobile number already registered.");
     }
 
-    const gotStore = await StoreInfo.findOne({ storeName });
-    if (gotStore) {
-      return sendResponse(res, 400, false, "Store with this name already exists.");
-    }
+    // const gotStore = await StoreInfo.findOne({ storeName });
+    // if (gotStore) {
+    //   return sendResponse(res, 400, false, "Store with this name already exists.");
+    // }
 
     let parsedPosition = {};
     let parsedLimitTime = {};
@@ -117,7 +117,6 @@ export const addStore = async (req, res) => {
       limitTime: {
         minimum: parsedLimitTime.minimum,
         maximum: parsedLimitTime.maximum,
-        selectTime: parsedLimitTime.selectTime,
       },
       zone,
     });
@@ -203,7 +202,6 @@ export const updateStore = async (req, res) => {
     store.limitTime = {
       minimum: limitTime?.minimum || store.limitTime?.minimum || "",
       maximum: limitTime?.maximum || store.limitTime?.maximum || "",
-      selectTime: limitTime?.selectTime || store.limitTime?.selectTime || "",
     };
 
     store.zone = zone || store.zone;
@@ -310,6 +308,42 @@ export const deleteStore = async (req, res) => {
   }
 };
 
+export const getStoreById = async (req, res) => {
+
+  try {
+
+    const { id: storeId } = req.params;
 
 
 
+    const store = await StoreInfo.findById(storeId).populate("sellerAuthId");
+
+
+
+    if (!store || store.is_deleted) {
+
+      return sendResponse(res, 404, false, "Store not found");
+
+    }
+
+
+
+    return sendResponse(res, 200, true, "Store fetched successfully", {
+
+      store,
+
+    });
+
+  } catch (error) {
+
+    console.error("Get store by ID error:", error);
+
+    return sendResponse(res, 500, false, "Internal server error", {
+
+      error: error.message,
+
+    });
+
+  }
+
+};
