@@ -10,9 +10,14 @@ import categoryRoute from "./routes/categoryRoute.js";
 import subCategoryRoute from "./routes/subCategoryRoute.js"
 import path from "path";
 import fs from "fs";
-
 import { fileURLToPath } from "url";
+import https from "https";
 
+// SSL options
+const sslOptions = {
+  key: fs.readFileSync(path.resolve("./key.pem")),
+  cert: fs.readFileSync(path.resolve("./cert.pem")),
+};
 
 dotenv.config({});
 
@@ -30,11 +35,22 @@ const corsOption = {
   credentials: true,
 };
 
+// const allowedOrigins = [
+//   "http://localhost:3000",
+//   "https://server.clozzetindia.in"
+// ];
+
 // const corsOption = {
-//   origin: "*",
+//   origin: (origin, callback) => {
+//     // if (allowedOrigins.includes(origin) || !origin) {
+//     //   callback(null, true);
+//     // } else {
+//     //   callback(new Error("Not allowed by CORS"));
+//     // }
+//     callback(null, true);
+//   },
 //   credentials: true,
 // };
-
 
 app.use(cors(corsOption));
 
@@ -63,3 +79,8 @@ app.listen(PORT, () => {
   connectDB();
   console.log(`Server is listening at port ${PORT}`);
 });
+
+// https.createServer(sslOptions, app).listen(PORT, () => {
+//   connectDB();
+//   console.log(`🔒 HTTPS Server is running on https://localhost:${PORT}`);
+// });
