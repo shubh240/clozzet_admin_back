@@ -1,9 +1,9 @@
-import { StoreInfo } from "../models/sellerStoreInfo.model.js"; 
-import { SellerUserAuth } from "../models/sellerUserInfo.model.js"; 
+import { StoreInfo } from "../models/sellerStoreInfo.model.js";
+import { SellerUserAuth } from "../models/sellerUserInfo.model.js";
 import cloudinary from "../config/cloudinary.js";
 import fs from "fs";
 import bcrypt from "bcryptjs";
-import { sendResponse } from "../common/index.js"; 
+import { sendResponse } from "../common/index.js";
 
 export const addStore = async (req, res) => {
   try {
@@ -29,14 +29,33 @@ export const addStore = async (req, res) => {
     } = req.body;
 
     if (
-      !firstName || !lastName || !mobileNo || !email || !password || !confirmPassword ||
-      !storeName || !storeAddress || !city || !state || !pincode
+      !firstName ||
+      !lastName ||
+      !mobileNo ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !storeName ||
+      !storeAddress ||
+      !city ||
+      !state ||
+      !pincode
     ) {
-      return sendResponse(res, 400, false, "All required fields (seller + store) must be filled.");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "All required fields (seller + store) must be filled."
+      );
     }
 
     if (password !== confirmPassword) {
-      return sendResponse(res, 400, false, "Password and confirm password should be the same.");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Password and confirm password should be the same."
+      );
     }
 
     const existingUser = await SellerUserAuth.findOne({
@@ -127,7 +146,6 @@ export const addStore = async (req, res) => {
       store: savedStore,
       seller: newSeller,
     });
-
   } catch (error) {
     console.error("Error creating store:", error);
     return sendResponse(res, 500, false, "Internal server error", {
@@ -222,10 +240,16 @@ export const updateStore = async (req, res) => {
 
       const updatedSeller = await seller.save();
 
-      return sendResponse(res, 200, true, "Store and seller updated successfully", {
-        store: updatedStore,
-        seller: updatedSeller,
-      });
+      return sendResponse(
+        res,
+        200,
+        true,
+        "Store and seller updated successfully",
+        {
+          store: updatedStore,
+          seller: updatedSeller,
+        }
+      );
     } else {
       return sendResponse(res, 200, true, "Store updated successfully", {
         store: updatedStore,
@@ -241,7 +265,7 @@ export const updateStore = async (req, res) => {
 
 export const getStores = async (req, res) => {
   try {
-    let filter = { is_deleted: false }; 
+    let filter = { is_deleted: false };
     const { search = "", zone = "", page = 1, limit = 10 } = req.query;
 
     if (search) {
@@ -290,10 +314,9 @@ export const deleteStore = async (req, res) => {
     }
 
     if (store.sellerAuthId) {
-      await SellerUserAuth.findByIdAndUpdate(
-        store.sellerAuthId,
-        { is_deleted: true }
-      );
+      await SellerUserAuth.findByIdAndUpdate(store.sellerAuthId, {
+        is_deleted: true,
+      });
     }
 
     return sendResponse(res, 200, true, "Store and seller deleted", {
@@ -309,41 +332,23 @@ export const deleteStore = async (req, res) => {
 };
 
 export const getStoreById = async (req, res) => {
-
   try {
-
     const { id: storeId } = req.params;
-
-
 
     const store = await StoreInfo.findById(storeId).populate("sellerAuthId");
 
-
-
     if (!store || store.is_deleted) {
-
       return sendResponse(res, 404, false, "Store not found");
-
     }
 
-
-
     return sendResponse(res, 200, true, "Store fetched successfully", {
-
       store,
-
     });
-
   } catch (error) {
-
     console.error("Get store by ID error:", error);
 
     return sendResponse(res, 500, false, "Internal server error", {
-
       error: error.message,
-
     });
-
   }
-
 };
