@@ -30,27 +30,27 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-const corsOption = {
-  origin: "http://localhost:3000",
-  credentials: true,
-};
+// const corsOption = {
+//   origin: "http://localhost:3000",
+//   credentials: true,
+// };
 
 // const allowedOrigins = [
 //   "http://localhost:3000",
 //   "https://server.clozzetindia.in"
 // ];
 
-// const corsOption = {
-//   origin: (origin, callback) => {
-//     // if (allowedOrigins.includes(origin) || !origin) {
-//     //   callback(null, true);
-//     // } else {
-//     //   callback(new Error("Not allowed by CORS"));
-//     // }
-//     callback(null, true);
-//   },
-//   credentials: true,
-// };
+const corsOption = {
+  origin: (origin, callback) => {
+    // if (allowedOrigins.includes(origin) || !origin) {
+    //   callback(null, true);
+    // } else {
+    //   callback(new Error("Not allowed by CORS"));
+    // }
+    callback(null, true);
+  },
+  credentials: true,
+};
 
 app.use(cors(corsOption));
 
