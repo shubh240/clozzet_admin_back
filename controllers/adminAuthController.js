@@ -65,12 +65,9 @@ export const login = async (req, res) => {
       userId: admin._id,
     };
 
-    console.log("tokenData:", tokenData)
-
     const token = await jwt.sign(tokenData, process.env.JWT_SECRET_KEY, {
       expiresIn: "1d",
     });
-    console.log("token: ", token);
 
     // Set cookie and send response
     res.cookie("token", token, {
