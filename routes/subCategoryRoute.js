@@ -15,7 +15,7 @@ router.post(
   createSubcategory
 ); 
 
-router.get("/list-sub-category", isUserAuthenticated, getSubcategories);
+router.get("/list-sub-category", getSubcategories);
 
 router.put(
   "/edit-sub-category/:id",

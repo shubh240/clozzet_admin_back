@@ -15,7 +15,7 @@ router.post(
   createCategory
 ); 
 
-router.get("/list-category", isUserAuthenticated, getCategories);
+router.get("/list-category", getCategories);
 
 router.put(
   "/edit-category/:id",
