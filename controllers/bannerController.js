@@ -200,3 +200,28 @@ export const deleteBanner = async (req, res) => {
   }
 };
 
+export const showBanner = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate banner ID
+    if (!id) {
+      return sendResponse(res, 400, false, "Banner ID is required");
+    }
+
+    // Find the banner by ID
+    const banner = await Banner.findById(id)
+      .populate("createdBy", "_id name email")
+      .lean();
+
+    if (!banner || banner.isDeleted) {
+      return sendResponse(res, 404, false, "Banner not found");
+    }
+
+    return sendResponse(res, 200, true, "Banner fetched successfully", banner);
+  } catch (error) {
+    return sendResponse(res, 500, false, "Server error", {
+      error: error.message,
+    });
+  }
+};
