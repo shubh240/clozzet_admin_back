@@ -1,7 +1,7 @@
 import express from "express";
 import upload from "../middleware/multer.middleware.js";
 import isUserAuthenticated from "../middleware/isUserAuthenticated.js";
-import { createBanner, deleteBanner, getBanner, showBanner, updateBanner } from "../controllers/bannerController.js";
+import { createBanner, deleteBanner, getBanner, showBanner, statusBanner, updateBanner } from "../controllers/bannerController.js";
 
 const router = express.Router();
 
@@ -28,5 +28,7 @@ router.put(
 router.delete("/delete-banner/:id", isUserAuthenticated, deleteBanner);
 
 router.get("/show-banner/:id", isUserAuthenticated, showBanner);
+
+router.patch("/status-banner/:id", isUserAuthenticated, statusBanner);
 
 export default router;

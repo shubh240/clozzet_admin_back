@@ -225,3 +225,37 @@ export const showBanner = async (req, res) => {
     });
   }
 };
+
+export const statusBanner = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate ID
+    if (!id) {
+      return sendResponse(res, 400, false, "Banner ID is required");
+    }
+
+    const banner = await Banner.findById(id);
+
+    if (!banner || banner.isDeleted) {
+      return sendResponse(res, 404, false, "Banner not found");
+    }
+
+    // Toggle status
+    banner.status = !banner.status;
+
+    await banner.save();
+
+    return sendResponse(
+      res,
+      200,
+      true,
+      `Banner status updated to ${banner.status ? "active" : "inactive"}`,
+      { status: banner.status }
+    );
+  } catch (error) {
+    return sendResponse(res, 500, false, "Server error", {
+      error: error.message,
+    });
+  }
+};
