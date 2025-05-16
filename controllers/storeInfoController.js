@@ -26,6 +26,11 @@ export const addStore = async (req, res) => {
       state,
       pincode,
       address_url,
+      ifscCode,
+      accountNumber,
+      accountHolderName,
+      branchName,
+      bankName
     } = req.body;
 
     if (
@@ -39,13 +44,14 @@ export const addStore = async (req, res) => {
       !storeAddress ||
       !city ||
       !state ||
-      !pincode
+      !pincode ||
+      !ifscCode || !accountNumber || !accountHolderName || !branchName || !bankName
     ) {
       return sendResponse(
         res,
         400,
         false,
-        "All required fields (seller + store) must be filled."
+        "All required fields (seller + store + bank) must be filled."
       );
     }
 
@@ -58,6 +64,27 @@ export const addStore = async (req, res) => {
       );
     }
 
+    /**
+     * Bank Code Start
+     */
+    const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+    const accountNumberRegex = /^[0-9]{9,18}$/;
+    const holderNameRegex = /^[a-zA-Z\s]{3,50}$/;
+
+    if (!ifscRegex.test(ifscCode)) {
+      return sendResponse(res, 400, false, "Invalid IFSC code. It should follow Indian IFSC format.");
+    }
+
+    if (!accountNumberRegex.test(accountNumber)) {
+      return sendResponse(res, 400, false, "Invalid account number. It must be 9 to 18 digits.");
+    }
+
+    if (!holderNameRegex.test(accountHolderName)) {
+      return sendResponse(res, 400, false, "Account holder name must contain only letters and spaces.");
+    }
+    /**
+     * Bank Code End
+     */
     const existingUser = await SellerUserAuth.findOne({
       "userInfo.mobileNo": mobileNo,
     });
@@ -106,6 +133,8 @@ export const addStore = async (req, res) => {
       });
       coverPhotoUrl = imageResult.secure_url;
       fs.unlinkSync(imagePath);
+    }else {
+      return sendResponse(res, 400, false, "Cover photo is required.");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -138,6 +167,11 @@ export const addStore = async (req, res) => {
         maximum: parsedLimitTime.maximum,
       },
       zone,
+      ifscCode,
+      accountNumber,
+      accountHolderName,
+      branchName,
+      bankName,
     });
 
     const savedStore = await newStore.save();
@@ -161,10 +195,7 @@ export const updateStore = async (req, res) => {
     const {
       storeName,
       storeAddress,
-      latitude,
-      longitude,
       zone,
-      mapAddress,
       limitTime,
       position,
       adminId,
@@ -175,7 +206,34 @@ export const updateStore = async (req, res) => {
       address_url,
       firstName,
       lastName,
+      ifscCode,
+      accountNumber,
+      accountHolderName,
+      branchName,
+      bankName,
     } = req.body;
+
+    /**
+     * Bank Code Start
+     */
+    const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+    const accountNumberRegex = /^[0-9]{9,18}$/;
+    const holderNameRegex = /^[a-zA-Z\s]{3,50}$/;
+
+    if (!ifscRegex.test(ifscCode)) {
+      return sendResponse(res, 400, false, "Invalid IFSC code. It should follow Indian IFSC format.");
+    }
+
+    if (!accountNumberRegex.test(accountNumber)) {
+      return sendResponse(res, 400, false, "Invalid account number. It must be 9 to 18 digits.");
+    }
+
+    if (!holderNameRegex.test(accountHolderName)) {
+      return sendResponse(res, 400, false, "Account holder name must contain only letters and spaces.");
+    }
+    /**
+     * Bank Code End
+     */
 
     // Find the store
     const store = await StoreInfo.findById(storeId);
@@ -208,13 +266,10 @@ export const updateStore = async (req, res) => {
     // Update store fields
     store.storeName = storeName || store.storeName;
     store.storeAddress = storeAddress || store.storeAddress;
-
-    // Update new fields if provided
     store.city = city || store.city;
     store.state = state || store.state;
     store.pincode = pincode || store.pincode;
     store.address_url = address_url || store.address_url;
-
     store.position = position || store.position;
 
     store.limitTime = {
@@ -226,6 +281,13 @@ export const updateStore = async (req, res) => {
     store.adminId = adminId || store.adminId;
     store.is_deleted = is_deleted !== undefined ? is_deleted : store.is_deleted;
 
+    // Update bank details if provided
+    store.ifscCode = ifscCode || store.ifscCode;
+    store.accountNumber = accountNumber || store.accountNumber;
+    store.accountHolderName = accountHolderName || store.accountHolderName;
+    store.branchName = branchName || store.branchName;
+    store.bankName = bankName || store.bankName;
+    
     const updatedStore = await store.save();
 
     // Now handle seller info update (but skip mobileNo and email)

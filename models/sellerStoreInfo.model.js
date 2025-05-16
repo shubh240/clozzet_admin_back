@@ -63,6 +63,28 @@ const SellerStoreInfoSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Bank Details
+    ifscCode: {
+      type: String,
+      required: true,
+    },
+    accountNumber: {
+      type: String,
+      required: true,
+    },
+    accountHolderName: {
+      type: String,
+      required: true,
+    },
+    branchName: {
+      type: String,
+      required: true,
+    },
+    bankName: {
+      type: String,
+      required: true,
+    },
+
     sellerAuthId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SellerUserAuth",
