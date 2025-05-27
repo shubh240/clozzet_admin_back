@@ -10,6 +10,7 @@ import categoryRoute from "./routes/categoryRoute.js";
 import subCategoryRoute from "./routes/subCategoryRoute.js"
 import bannerRoute from "./routes/bannerRoute.js"
 import configRoute from "./routes/configRoute.js"
+import orderRoute from "./routes/orderRoute.js"
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -67,6 +68,7 @@ app.use("/api/v1/subCategory",subCategoryRoute);
 app.use("/api/v1/store", storeRoute);
 app.use("/api/v1/banner",bannerRoute);
 app.use("/api/v1/config",configRoute);
+app.use("/api/v1/order",orderRoute);
 
 
 
