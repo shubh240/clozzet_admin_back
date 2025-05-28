@@ -11,6 +11,7 @@ import subCategoryRoute from "./routes/subCategoryRoute.js"
 import bannerRoute from "./routes/bannerRoute.js"
 import configRoute from "./routes/configRoute.js"
 import orderRoute from "./routes/orderRoute.js"
+import colorRoute from "./routes/colorRoute.js"
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -69,6 +70,7 @@ app.use("/api/v1/store", storeRoute);
 app.use("/api/v1/banner",bannerRoute);
 app.use("/api/v1/config",configRoute);
 app.use("/api/v1/order",orderRoute);
+app.use("/api/v1/color",colorRoute);
 
 
 
