@@ -9,9 +9,11 @@ import storeRoute from "./routes/storeInfoRoute.js";
 import categoryRoute from "./routes/categoryRoute.js";
 import subCategoryRoute from "./routes/subCategoryRoute.js"
 import bannerRoute from "./routes/bannerRoute.js"
+import advertisementRoute from "./routes/advertisementRoute.js"
 import configRoute from "./routes/configRoute.js"
 import orderRoute from "./routes/orderRoute.js"
 import colorRoute from "./routes/colorRoute.js"
+import contentRoute from "./routes/contentRoute.js"
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -68,6 +70,8 @@ app.use("/api/v1/category",categoryRoute);
 app.use("/api/v1/subCategory",subCategoryRoute);
 app.use("/api/v1/store", storeRoute);
 app.use("/api/v1/banner",bannerRoute);
+app.use("/api/v1/advertisement",advertisementRoute);
+app.use("/api/v1/content",contentRoute);
 app.use("/api/v1/config",configRoute);
 app.use("/api/v1/order",orderRoute);
 app.use("/api/v1/color",colorRoute);
