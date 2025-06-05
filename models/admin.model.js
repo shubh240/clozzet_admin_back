@@ -25,6 +25,11 @@ const AdminAuthSchema = new mongoose.Schema(
       },
     
     },
+    token: {
+      type: String,
+      default: null
+    },
+
   },
   { timestamps: true }
 );

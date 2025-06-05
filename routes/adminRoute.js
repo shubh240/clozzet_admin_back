@@ -5,12 +5,13 @@ import {
   logout,
  
 } from "../controllers/adminAuthController.js";
+import isUserAuthenticated from "../middleware/isUserAuthenticated.js";
 
 const router = express.Router();
 
-router.route("/signup").post(signup);
-router.route("/login").post(login);
-router.route("/logout").get(logout);
+router.post("/signup", signup);
+router.post("/login", login);
+router.get("/logout",isUserAuthenticated, logout);
 
 console.log("Admin route")
 
