@@ -29,7 +29,6 @@ export const addStore = async (req, res) => {
       ifscCode,
       accountNumber,
       accountHolderName,
-      branchName,
       bankName
     } = req.body;
 
@@ -45,7 +44,7 @@ export const addStore = async (req, res) => {
       !city ||
       !state ||
       !pincode ||
-      !ifscCode || !accountNumber || !accountHolderName || !branchName || !bankName
+      !ifscCode || !accountNumber || !accountHolderName || !bankName
     ) {
       return sendResponse(
         res,
@@ -67,13 +66,8 @@ export const addStore = async (req, res) => {
     /**
      * Bank Code Start
      */
-    const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
     const accountNumberRegex = /^[0-9]{9,18}$/;
     const holderNameRegex = /^[a-zA-Z\s]{3,50}$/;
-
-    if (!ifscRegex.test(ifscCode)) {
-      return sendResponse(res, 400, false, "Invalid IFSC code. It should follow Indian IFSC format.");
-    }
 
     if (!accountNumberRegex.test(accountNumber)) {
       return sendResponse(res, 400, false, "Invalid account number. It must be 9 to 18 digits.");
@@ -170,7 +164,6 @@ export const addStore = async (req, res) => {
       ifscCode,
       accountNumber,
       accountHolderName,
-      branchName,
       bankName,
     });
 
@@ -209,7 +202,6 @@ export const updateStore = async (req, res) => {
       ifscCode,
       accountNumber,
       accountHolderName,
-      branchName,
       bankName,
     } = req.body;
 
@@ -285,7 +277,6 @@ export const updateStore = async (req, res) => {
     store.ifscCode = ifscCode || store.ifscCode;
     store.accountNumber = accountNumber || store.accountNumber;
     store.accountHolderName = accountHolderName || store.accountHolderName;
-    store.branchName = branchName || store.branchName;
     store.bankName = bankName || store.bankName;
     
     const updatedStore = await store.save();

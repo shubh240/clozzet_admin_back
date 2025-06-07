@@ -76,10 +76,6 @@ const SellerStoreInfoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    branchName: {
-      type: String,
-      required: true,
-    },
     bankName: {
       type: String,
       required: true,
