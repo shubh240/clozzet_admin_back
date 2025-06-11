@@ -73,13 +73,16 @@ export const createAdvertisement = async (req, res) => {
 
 export const getAdvertisement = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, status } = req.query;
 
     const query = { isDeleted: false };
 
-    // Add search condition if query param exists
     if (search && search.trim() !== "") {
       query.name = { $regex: search.trim(), $options: "i" };
+    }
+
+    if (status === "true" || status === "false") {
+      query.status = status === "true";
     }
 
     const advertisements = await Advertisement.find(query)
@@ -98,6 +101,7 @@ export const getAdvertisement = async (req, res) => {
     return sendResponse(res, 500, false, error.message);
   }
 };
+
 
 export const updateAdvertisement = async (req, res) => {
   try {

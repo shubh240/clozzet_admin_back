@@ -9,19 +9,16 @@ export const createCategory = async (req, res) => {
       const { name } = req.body;
       const createdBy = req.id;
       
-      // ✅ Validation: name is required
       if (!name || name.trim() === "") {
         return sendResponse(res, 400, false, "Category name is required");
       }
   
-      // ✅ Validation: image file is required
       if (!req.files || !req.files["image"] || req.files["image"].length === 0) {
         return sendResponse(res, 400, false, "Category image is required");
       }
   
       const imagePath = req.files["image"][0].path;
   
-      // Upload to Cloudinary
       const imageResult = await cloudinary.uploader.upload(imagePath, {
         folder: "uploads/categories/images",
         resource_type: "image",
@@ -50,13 +47,12 @@ export const getCategories = async (req, res) => {
   
       const query = { isDeleted: false };
   
-      // Add search condition if query param exists
       if (search && search.trim() !== "") {
         query.name = { $regex: search.trim(), $options: "i" }; 
       }
   
       const categories = await Category.find(query)
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: 1 })
         .populate("createdBy", "_id name email")
         .lean();
   
@@ -72,12 +68,10 @@ export const updateCategory = async (req, res) => {
     const { name } = req.body;
     const updatedBy = req.id;
 
-    // ✅ Validate: Category ID is required
     if (!id) {
       return sendResponse(res, 400, false, "Category ID is required");
     }
 
-    // ✅ Check if category exists
     const category = await Category.findById(id);
     if (!category) {
       return sendResponse(res, 404, false, "Category not found");
@@ -85,22 +79,19 @@ export const updateCategory = async (req, res) => {
 
     let imageUrl = category.image;
 
-    // ✅ If a new image is uploaded
     if (req.files && req.files["image"]) {
       const imagePath = req.files["image"][0].path;
 
-      // Upload image to Cloudinary
       const imageResult = await cloudinary.uploader.upload(imagePath, {
         folder: "uploads/categories/images",
         resource_type: "image",
       });
 
       imageUrl = imageResult.secure_url;
-      fs.unlinkSync(imagePath); // Remove local file after upload
+      fs.unlinkSync(imagePath); 
       category.image = imageUrl;
     }
 
-    // ✅ Update fields only if they are provided
     if (name && name.trim() !== "") {
       category.name = name;
     }
@@ -120,18 +111,15 @@ export const deleteCategory = async (req, res) => {
       const { id } = req.params;
       const deletedBy = req.id;
   
-      // Validate category ID
       if (!id) {
         return sendResponse(res, 400, false, "Category ID is required");
       }
   
-      // Find the category by ID
       const category = await Category.findById(id);
       if (!category) {
         return sendResponse(res, 404, false, "Category not found");
       }
   
-      // Soft delete by updating isDeleted and deletedBy fields
       category.isDeleted = true;
       category.deletedBy = deletedBy;
   
