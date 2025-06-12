@@ -5,7 +5,8 @@ import {
   updateStore,
   getStores,
   deleteStore,
-  getStoreById
+  getStoreById,
+  toggleStoreStatus,
 } from "../controllers/storeInfoController.js";
 import isUserAuthenticated from "../middleware/isUserAuthenticated.js";
 
@@ -20,9 +21,9 @@ router.post(
     { name: "coverPhoto", maxCount: 1 },
   ]),
   addStore
-); 
+);
 
-router.get("/list-stores", isUserAuthenticated, getStores); 
+router.get("/list-stores", isUserAuthenticated, getStores);
 
 router.put(
   "/edit-store/:id",
@@ -33,10 +34,12 @@ router.put(
     { name: "coverPhoto", maxCount: 1 },
   ]),
   updateStore
-); 
+);
 
 router.get("/details-store/:id", isUserAuthenticated, getStoreById);
 
-router.delete("/delete-store/:id", isUserAuthenticated, deleteStore); 
+router.delete("/delete-store/:id", isUserAuthenticated, deleteStore);
+
+router.put("/toggle-status-store/:id", isUserAuthenticated, toggleStoreStatus);
 
 export default router;

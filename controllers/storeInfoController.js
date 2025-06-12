@@ -404,3 +404,31 @@ export const getStoreById = async (req, res) => {
     });
   }
 };
+
+export const toggleStoreStatus = async (req, res) => {
+  try {
+    const { id: storeId } = req.params;
+
+    const store = await StoreInfo.findById(storeId);
+    if (!store || store.is_deleted) {
+      return sendResponse(res, 404, false, "Store not found.");
+    }
+
+    // Toggle storeOn: true -> false or false -> true
+    store.storeOn = !store.storeOn;
+    const updatedStore = await store.save();
+
+    return sendResponse(
+      res,
+      200,
+      true,
+      `Store has been turned ${updatedStore.storeOn ? "ON" : "OFF"}.`,
+      { store: updatedStore }
+    );
+  } catch (error) {
+    console.error("Toggle store status error:", error);
+    return sendResponse(res, 500, false, "Internal server error", {
+      error: error.message,
+    });
+  }
+};
