@@ -35,19 +35,19 @@ console.log("Decoded token:", decoded);
       Customer.findById(decoded.userId),
     ]);
 
-    if (admin && admin.token === token) {
+    if (admin) {
       req.id = admin._id;
       req.role = "admin";
-    } else if (seller && seller.token === token) {
+    } else if (seller) {
       req.id = seller._id;
       req.role = "seller";
-    } else if (customer && customer.token === token) {
+    } else if (customer) {
       req.id = customer._id;
       req.role = "customer";
     } else {
       return sendResponse(res, 401, false, "Token mismatch or user not found");
     }
-
+    console.log(req.role);
     next();
   } catch (error) {
     console.error("JWT verify error:", error.message);
@@ -55,7 +55,7 @@ console.log("Decoded token:", decoded);
   }
 };
 
-const isUserAuthenticatedOld = async (req, res, next) => {
+const isUserAuthenticatedOld1 = async (req, res, next) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
@@ -85,5 +85,6 @@ const isUserAuthenticatedOld = async (req, res, next) => {
       .json({ auth: false, message: "Token verification failed" });
   }
 };
+
 
 export default isUserAuthenticated;
