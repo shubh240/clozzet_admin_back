@@ -432,3 +432,30 @@ export const toggleStoreStatus = async (req, res) => {
     });
   }
 };
+
+export const updateSellerPassword = async (req, res) => {
+  try {
+    const { id: sellerId } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return sendResponse(res, 400, false, "Password is required.");
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const seller = await SellerUserAuth.findById(sellerId);
+
+    if (!seller) {
+      return sendResponse(res, 404, false, "Seller not found.");
+    }
+
+    seller.userAuth.password = hashedPassword;
+    await seller.save();
+
+    return sendResponse(res, 200, true, "Password updated successfully.");
+  } catch (error) {
+    console.error("Error updating password:", error);
+    return sendResponse(res, 500, false, error.message);
+  }
+};
