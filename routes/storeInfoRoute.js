@@ -7,6 +7,7 @@ import {
   deleteStore,
   getStoreById,
   toggleStoreStatus,
+  updateSellerPassword,
 } from "../controllers/storeInfoController.js";
 import isUserAuthenticated from "../middleware/isUserAuthenticated.js";
 
@@ -41,5 +42,11 @@ router.get("/details-store/:id", isUserAuthenticated, getStoreById);
 router.delete("/delete-store/:id", isUserAuthenticated, deleteStore);
 
 router.put("/toggle-status-store/:id", isUserAuthenticated, toggleStoreStatus);
+
+router.put(
+  "/edit-password/:id",
+  isUserAuthenticated,
+  updateSellerPassword
+);
 
 export default router;
