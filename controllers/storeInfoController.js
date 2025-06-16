@@ -433,6 +433,34 @@ export const toggleStoreStatus = async (req, res) => {
   }
 };
 
+export const toggleStoreActive = async (req, res) => {
+  try {
+    const { id: storeId } = req.params;
+
+    const store = await StoreInfo.findById(storeId);
+    if (!store || store.is_deleted) {
+      return sendResponse(res, 404, false, "Store not found.");
+    }
+
+    // Toggle storeOn: true -> false or false -> true
+    store.isActive = !store.isActive;
+    const updatedStore = await store.save();
+
+    return sendResponse(
+      res,
+      200,
+      true,
+      `Store has been ${updatedStore.isActive ? "Active" : "In-Active"}.`,
+      { store: updatedStore }
+    );
+  } catch (error) {
+    console.error("Toggle store status error:", error);
+    return sendResponse(res, 500, false, "Internal server error", {
+      error: error.message,
+    });
+  }
+};
+
 export const updateSellerPassword = async (req, res) => {
   try {
     const { id: sellerId } = req.params;
