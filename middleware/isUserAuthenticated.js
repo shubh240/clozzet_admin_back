@@ -55,7 +55,7 @@ console.log("Decoded token:", decoded);
   }
 };
 
-const isUserAuthenticatedOld1 = async (req, res, next) => {
+export const isSuperAdminAuthenticated = async (req, res, next) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
