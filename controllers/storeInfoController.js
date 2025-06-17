@@ -189,7 +189,8 @@ export const updateStore = async (req, res) => {
       storeAddress,
       zone,
       limitTime,
-      position,
+      latitude,
+      longitude,
       adminId,
       is_deleted,
       city,
@@ -252,8 +253,7 @@ export const updateStore = async (req, res) => {
       });
       store.coverPhotoUrl = coverResult.secure_url;
       fs.unlinkSync(coverPath);
-    }
-
+    }    
     // Update store fields
     store.storeName = storeName || store.storeName;
     store.storeAddress = storeAddress || store.storeAddress;
@@ -261,7 +261,10 @@ export const updateStore = async (req, res) => {
     store.state = state || store.state;
     store.pincode = pincode || store.pincode;
     store.address_url = address_url || store.address_url;
-    store.position = position || store.position;
+    store.position = {
+      lat: latitude ? parseFloat(latitude) : store.position?.lat,
+      lng: longitude ? parseFloat(longitude) : store.position?.lng,
+    };
 
     store.limitTime = {
       minimum: limitTime?.minimum || store.limitTime?.minimum || "",
