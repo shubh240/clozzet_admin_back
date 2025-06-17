@@ -10,7 +10,7 @@ import {
   toggleStoreActive,
   updateSellerPassword,
 } from "../controllers/storeInfoController.js";
-import isUserAuthenticated from "../middleware/isUserAuthenticated.js";
+import isUserAuthenticated ,{isSuperAdminAuthenticated} from "../middleware/isUserAuthenticated.js";
 
 const router = express.Router();
 
@@ -44,7 +44,7 @@ router.delete("/delete-store/:id", isUserAuthenticated, deleteStore);
 
 router.put("/toggle-status-store/:id", isUserAuthenticated, toggleStoreStatus);
 
-router.put("/toggle-active-store/:id", isUserAuthenticated, toggleStoreActive);
+router.put("/toggle-active-store/:id", isSuperAdminAuthenticated, toggleStoreActive);
 
 router.put(
   "/edit-password/:id",
