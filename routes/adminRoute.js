@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post("/signup", signup);
 router.post("/login", login);
-router.get("/logout",logout);
+router.get("/logout",isSuperAdminAuthenticated, logout);
 
 console.log("Admin route")
 
