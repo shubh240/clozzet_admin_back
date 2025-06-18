@@ -321,7 +321,11 @@ export const updateStore = async (req, res) => {
 export const getStores = async (req, res) => {
   try {
     let filter = { is_deleted: false };
-    const { search = "", zone = "", page = 1, limit = 10 } = req.query;
+    const {isCustomer, search = "", zone = "", page = 1, limit = 10 } = req.query;
+
+    if(isCustomer){
+      filter.isActive = true
+    }
 
     if (search) {
       filter.storeName = { $regex: search, $options: "i" };

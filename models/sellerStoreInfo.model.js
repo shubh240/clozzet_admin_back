@@ -95,7 +95,7 @@ const SellerStoreInfoSchema = new mongoose.Schema(
       ref: "AdminAuth",
     },
     is_deleted: { type: Boolean, default: false },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true }   //true = active , false=inactive
   },
   { timestamps: true }
 );
