@@ -8,6 +8,7 @@ import { sendResponse } from "../common/index.js";
 export const addStore = async (req, res) => {
   try {
     const adminId = req.id;
+    console.log(req.body , req.files)
 
     const {
       firstName,
@@ -42,17 +43,16 @@ export const addStore = async (req, res) => {
       !storeAddress ||
       !city ||
       !state ||
-      !pincode ||
-      !ifscCode || !accountNumber || !accountHolderName || !bankName
+      !pincode
+      // !ifscCode || !accountNumber || !accountHolderName || !bankName
     ) {
       return sendResponse(
         res,
         400,
         false,
-        "All required fields (seller + store + bank) must be filled."
+        "All required fields (seller + store) must be filled."
       );
     }
-
     if (password !== confirmPassword) {
       return sendResponse(
         res,
@@ -321,7 +321,7 @@ export const updateStore = async (req, res) => {
 export const getStores = async (req, res) => {
   try {
     let filter = { is_deleted: false };
-    const {isCustomer, search = "", zone = "", page = 1, limit = 10 } = req.query;
+    const {isCustomer, search = "", zone = "", page, limit } = req.query;
 
     if(isCustomer){
       filter.isActive = true

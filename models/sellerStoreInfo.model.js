@@ -70,19 +70,19 @@ const SellerStoreInfoSchema = new mongoose.Schema(
     // Bank Details
     ifscCode: {
       type: String,
-      required: true,
+      // required: true,
     },
     accountNumber: {
       type: String,
-      required: true,
+      // required: true,
     },
     accountHolderName: {
       type: String,
-      required: true,
+      // required: true,
     },
     bankName: {
       type: String,
-      required: true,
+      // required: true,
     },
 
     sellerAuthId: {
