@@ -78,12 +78,20 @@ export const addStore = async (req, res) => {
     /**
      * Bank Code End
      */
+    // const existingUser = await SellerUserAuth.findOne({
+    //   "userInfo.mobileNo": mobileNo,
+    // });
+    // if (existingUser) {
+    //   return sendResponse(res, 400, false, "Mobile number already registered.");
+    // }
+    
     const existingUser = await SellerUserAuth.findOne({
-      "userInfo.mobileNo": mobileNo,
+      "userAuth.email": email,
     });
     if (existingUser) {
-      return sendResponse(res, 400, false, "Mobile number already registered.");
+      return sendResponse(res, 400, false, "Email already registered.");
     }
+
 
     // const gotStore = await StoreInfo.findOne({ storeName });
     // if (gotStore) {
