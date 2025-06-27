@@ -9,6 +9,7 @@ import {
   toggleStoreStatus,
   toggleStoreActive,
   updateSellerPassword,
+  checkStoreOpenClose,
 } from "../controllers/storeInfoController.js";
 import isUserAuthenticated ,{isSuperAdminAuthenticated} from "../middleware/isUserAuthenticated.js";
 
@@ -51,5 +52,7 @@ router.put(
   isUserAuthenticated,
   updateSellerPassword
 );
+
+router.get("/cron/store-on-off", checkStoreOpenClose);
 
 export default router;

@@ -8,7 +8,7 @@ import { sendResponse } from "../common/index.js";
 export const addStore = async (req, res) => {
   try {
     const adminId = req.id;
-    console.log(req.body , req.files)
+    console.log(req.body, req.files);
 
     const {
       firstName,
@@ -29,7 +29,7 @@ export const addStore = async (req, res) => {
       ifscCode,
       accountNumber,
       accountHolderName,
-      bankName
+      bankName,
     } = req.body;
 
     if (
@@ -84,14 +84,13 @@ export const addStore = async (req, res) => {
     // if (existingUser) {
     //   return sendResponse(res, 400, false, "Mobile number already registered.");
     // }
-    
+
     const existingUser = await SellerUserAuth.findOne({
       "userAuth.email": email,
     });
     if (existingUser) {
       return sendResponse(res, 400, false, "Email already registered.");
     }
-
 
     // const gotStore = await StoreInfo.findOne({ storeName });
     // if (gotStore) {
@@ -134,7 +133,7 @@ export const addStore = async (req, res) => {
       });
       coverPhotoUrl = imageResult.secure_url;
       fs.unlinkSync(imagePath);
-    }else {
+    } else {
       return sendResponse(res, 400, false, "Cover photo is required.");
     }
 
@@ -212,7 +211,6 @@ export const updateStore = async (req, res) => {
       accountHolderName,
       bankName,
     } = req.body;
-
     /**
      * Bank Code Start
      */
@@ -261,7 +259,7 @@ export const updateStore = async (req, res) => {
       });
       store.coverPhotoUrl = coverResult.secure_url;
       fs.unlinkSync(coverPath);
-    }    
+    }
     // Update store fields
     store.storeName = storeName || store.storeName;
     store.storeAddress = storeAddress || store.storeAddress;
@@ -274,9 +272,18 @@ export const updateStore = async (req, res) => {
       lng: longitude ? parseFloat(longitude) : store.position?.lng,
     };
 
+    let parsedLimitTime = {};
+    try {
+      if (limitTime) {
+        parsedLimitTime = JSON.parse(limitTime);
+      }
+    } catch (err) {
+      console.error("Invalid limitTime JSON:", limitTime);
+    }
+
     store.limitTime = {
-      minimum: limitTime?.minimum || store.limitTime?.minimum || "",
-      maximum: limitTime?.maximum || store.limitTime?.maximum || "",
+      minimum: parsedLimitTime?.minimum || store.limitTime?.minimum || "",
+      maximum: parsedLimitTime?.maximum || store.limitTime?.maximum || "",
     };
 
     store.zone = zone || store.zone;
@@ -288,7 +295,7 @@ export const updateStore = async (req, res) => {
     store.accountNumber = accountNumber || store.accountNumber;
     store.accountHolderName = accountHolderName || store.accountHolderName;
     store.bankName = bankName || store.bankName;
-    
+
     const updatedStore = await store.save();
 
     // Now handle seller info update (but skip mobileNo and email)
@@ -329,10 +336,10 @@ export const updateStore = async (req, res) => {
 export const getStores = async (req, res) => {
   try {
     let filter = { is_deleted: false };
-    const {isCustomer, search = "", zone = "", page, limit } = req.query;
+    const { isCustomer, search = "", zone = "", page, limit } = req.query;
 
-    if(isCustomer){
-      filter.isActive = true
+    if (isCustomer) {
+      filter.isActive = true;
     }
 
     if (search) {
@@ -484,7 +491,7 @@ export const updateSellerPassword = async (req, res) => {
     if (!password) {
       return sendResponse(res, 400, false, "Password is required.");
     }
-    
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const seller = await SellerUserAuth.findById(sellerId);
@@ -500,5 +507,59 @@ export const updateSellerPassword = async (req, res) => {
   } catch (error) {
     console.error("Error updating password:", error);
     return sendResponse(res, 500, false, error.message);
+  }
+};
+
+function parseTimeToTodayDate(timeStr) {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  const now = new Date();
+  now.setHours(hours, minutes, 0, 0);
+  return now;
+}
+
+export const checkStoreOpenClose = async (req, res) => {
+  try {
+    const stores = await StoreInfo.find({
+      is_deleted: false,
+      "limitTime.minimum": { $ne: "" },
+      "limitTime.maximum": { $ne: "" },
+    });
+
+    const now = new Date();
+
+    for (const store of stores) {
+      const minTime = parseTimeToTodayDate(store.limitTime.minimum);
+      const maxTime = parseTimeToTodayDate(store.limitTime.maximum);
+
+      let newStoreOn = false;
+
+      if (store.isActive) {
+        const isWithinTime = now >= minTime && now <= maxTime;
+        newStoreOn = isWithinTime;
+      } else {
+        newStoreOn = false; // Force close if inactive
+      }
+
+      if (store.storeOn !== newStoreOn) {
+        await StoreInfo.findByIdAndUpdate(store._id, { storeOn: newStoreOn });
+        console.log(
+          `Store ${store.storeName} status updated to: ${
+            newStoreOn ? "OPEN" : "CLOSED"
+          }`
+        );
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Store open/close check completed successfully.",
+    });
+  } catch (error) {
+    console.error("Error in Store Open/Close Cron:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Error while checking store open/close status.",
+      error: error.message,
+    });
   }
 };
