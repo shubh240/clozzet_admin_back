@@ -353,6 +353,7 @@ export const getStores = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const stores = await StoreInfo.find(filter)
+      .sort({ isActive: -1, storeOn: -1, storeName: 1 })  
       .skip(skip)
       .limit(limit)
       .populate("sellerAuthId");
