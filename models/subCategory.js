@@ -11,6 +11,10 @@ const SubcategorySchema = new mongoose.Schema(
       ref: "Category",
       required: true, 
     },
+    isReturn: {
+      type: Boolean,
+      default: false, 
+    },
     image: {
       type: String, 
     },
