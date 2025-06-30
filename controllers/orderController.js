@@ -53,7 +53,7 @@ export const listOrders = async (req, res) => {
     const orders = await ordersQuery;
 
     if (!orders.length) {
-      return sendResponse(res, 404, false, "No orders found");
+      return sendResponse(res, 400, false, "No orders found");
     }
 
     const ordersWithDetails = await Promise.all(
