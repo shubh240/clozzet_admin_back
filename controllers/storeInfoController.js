@@ -353,7 +353,7 @@ export const getStores = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const stores = await StoreInfo.find(filter)
-      .sort({ isActive: -1, storeOn: -1, storeName: 1 })  
+      .sort({ isActive: -1, storeOn: -1, storeName: 1 })
       .skip(skip)
       .limit(limit)
       .populate("sellerAuthId");
@@ -438,7 +438,19 @@ export const toggleStoreStatus = async (req, res) => {
     }
 
     // Toggle storeOn: true -> false or false -> true
-    store.storeOn = !store.storeOn;
+    // store.storeOn = !store.storeOn;
+    // const updatedStore = await store.save();
+    // Inside toggleStoreStatus
+
+    if (store.storeOn === true) {
+      // Turning OFF manually
+      store.storeOn = false;
+      store.storeCloseDate = new Date(); 
+    } else {
+      // Turning ON manually
+      store.storeOn = true;
+      store.storeCloseDate = null; // Clear manual close
+    }
     const updatedStore = await store.save();
 
     return sendResponse(
@@ -446,7 +458,7 @@ export const toggleStoreStatus = async (req, res) => {
       200,
       true,
       `Store has been turned ${updatedStore.storeOn ? "ON" : "OFF"}.`,
-      { store: updatedStore }
+      {}
     );
   } catch (error) {
     console.error("Toggle store status error:", error);
@@ -527,6 +539,73 @@ export const checkStoreOpenClose = async (req, res) => {
     });
 
     const now = new Date();
+    const todayDateString = now.toDateString();
+
+    for (const store of stores) {
+      const minTime = parseTimeToTodayDate(store.limitTime.minimum); // store opening time today
+      const maxTime = parseTimeToTodayDate(store.limitTime.maximum); // store closing time today
+
+      let newStoreOn = store.storeOn;
+
+      const isWithinOpenWindow = now >= minTime && now <= maxTime;
+      const isAfterClosingTime = now > maxTime;
+
+      const isManuallyClosedToday =
+        store.storeCloseDate &&
+        new Date(store.storeCloseDate).toDateString() === todayDateString;
+
+      // --- STEP 1: Clear manual close lock if day changed (New Day Midnight Reset) ---
+      if (
+        store.storeCloseDate &&
+        new Date(store.storeCloseDate).toDateString() !== todayDateString
+      ) {
+        await StoreInfo.findByIdAndUpdate(store._id, { storeCloseDate: null });
+        console.log(`Cleared manual close lock for store: ${store.storeName}`);
+      }
+
+      // --- STEP 2: Auto Open logic (only if not manually closed today) ---
+      if (store.isActive && isWithinOpenWindow && !isManuallyClosedToday && !store.storeOn) {
+        newStoreOn = true;
+      }
+
+      // --- STEP 3: Auto Close logic (after closing time) ---
+      if (isAfterClosingTime && store.storeOn) {
+        newStoreOn = false;
+      }
+
+      // --- STEP 4: Update if status changed ---
+      if (store.storeOn !== newStoreOn) {
+        await StoreInfo.findByIdAndUpdate(store._id, { storeOn: newStoreOn });
+        console.log(
+          `Store ${store.storeName} status changed → ${newStoreOn ? "OPEN" : "CLOSED"}`
+        );
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Store open/close cron executed successfully",
+    });
+  } catch (error) {
+    console.error("Error in checkStoreOpenClose:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Cron job failed",
+      error: error.message,
+    });
+  }
+};
+
+
+export const checkStoreOpenCloseOld = async (req, res) => {
+  try {
+    const stores = await StoreInfo.find({
+      is_deleted: false,
+      "limitTime.minimum": { $ne: "" },
+      "limitTime.maximum": { $ne: "" },
+    });
+
+    const now = new Date();
 
     for (const store of stores) {
       const minTime = parseTimeToTodayDate(store.limitTime.minimum);
@@ -538,7 +617,7 @@ export const checkStoreOpenClose = async (req, res) => {
         const isWithinTime = now >= minTime && now <= maxTime;
         newStoreOn = isWithinTime;
       } else {
-        newStoreOn = false; // Force close if inactive
+        newStoreOn = false;
       }
 
       if (store.storeOn !== newStoreOn) {

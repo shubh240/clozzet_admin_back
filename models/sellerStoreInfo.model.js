@@ -95,7 +95,12 @@ const SellerStoreInfoSchema = new mongoose.Schema(
       ref: "AdminAuth",
     },
     is_deleted: { type: Boolean, default: false },
-    isActive: { type: Boolean, default: true }   //true = active , false=inactive
+    isActive: { type: Boolean, default: true },   //true = active , false=inactive
+    storeCloseDate: { 
+      type: Date, 
+      default: null 
+    } // Track the date when store was manually closed
+
   },
   { timestamps: true }
 );
