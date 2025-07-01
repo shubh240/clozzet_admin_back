@@ -6,6 +6,7 @@ const customerNotificationSchema = new mongoose.Schema({
     ref: "Customer",
     required: true,
   },
+  notificationType:String,
   title: String,
   body: String,
   image: String,
