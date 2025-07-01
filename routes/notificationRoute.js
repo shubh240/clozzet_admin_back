@@ -1,6 +1,7 @@
 import express from "express";
 import {
-  sendNotification
+  sendNotification,
+  sendPushNoti
 } from "../controllers/notificationController.js";
 import isUserAuthenticated , {isSuperAdminAuthenticated} from "../middleware/isUserAuthenticated.js";
 import upload from "../middleware/multer.middleware.js";
@@ -11,5 +12,6 @@ router.post("/",isSuperAdminAuthenticated,  upload.fields([
     { name: "image", maxCount: 1 }
   ]), sendNotification);
 
+router.post("/send-push" ,sendPushNoti);
 
 export default router;

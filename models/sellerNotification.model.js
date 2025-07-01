@@ -6,6 +6,7 @@ const sellerNotificationSchema = new mongoose.Schema({
     ref: "SellerUserAuth",
     required: true,
   },
+  notificationType:String,
   title: String,
   body: String,
   image: String,
