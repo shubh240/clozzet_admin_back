@@ -7,27 +7,33 @@ import { sendPushNotification } from "../utils/firebase-admin.js";
 import cloudinary from "../config/cloudinary.js";
 import fs from "fs";
 
-export const sendNotification  = async(req,res)=>{
- try {
+export const sendNotification = async (req, res) => {
+  try {
     const { type, title, body } = req.body;
 
     if (!type || !["customer", "seller"].includes(type)) {
-      return sendResponse(res, 400, false, "type must be 'customer' or 'seller'");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "type must be 'customer' or 'seller'"
+      );
     }
     let imageUrl = null;
-    if(req.files["image"]){
-        const imagePath = req.files["image"][0].path;
-          const imageResult = await cloudinary.uploader.upload(imagePath, {
-            folder: "uploads/notifications/images",
-            resource_type: "image",
-          });
-      
-        imageUrl = imageResult.secure_url;
-        fs.unlinkSync(imagePath); 
+    if (req.files["image"]) {
+      const imagePath = req.files["image"][0].path;
+      const imageResult = await cloudinary.uploader.upload(imagePath, {
+        folder: "uploads/notifications/images",
+        resource_type: "image",
+      });
+
+      imageUrl = imageResult.secure_url;
+      fs.unlinkSync(imagePath);
     }
 
     const Model = type === "customer" ? Customer : SellerUserAuth;
-    const NotificationModel = type === "customer" ? CustomerNotification : SellerNotification;
+    const NotificationModel =
+      type === "customer" ? CustomerNotification : SellerNotification;
     const idField = type === "customer" ? "customerId" : "sellerId";
 
     const users = await Model.find({
@@ -43,10 +49,10 @@ export const sendNotification  = async(req,res)=>{
         try {
           await NotificationModel.create({
             [idField]: user._id,
-            notificationType : 'General',
+            notificationType: "General",
             title,
             body,
-            image : imageUrl,
+            image: imageUrl,
           });
           return true;
         } catch (err) {
@@ -68,68 +74,82 @@ export const sendNotification  = async(req,res)=>{
     console.error("Send Notification Error:", err);
     return sendResponse(res, 500, false, "Internal Server Error");
   }
-}
+};
 
+export const sendPushNoti = async (req, res) => {
+  try {
+    let customerSuccessCount = 0;
+    let sellerSuccessCount = 0;
+    // ------------------------- Customer Notifications -------------------------
 
-export const sendPushNoti = async(req,res)=>{
-    try {
-        // ------------------------- Customer Notifications -------------------------
+    const customerNotifs = await CustomerNotification.find({ isSend: false })
+      .sort({ createdAt: 1 })
+      .limit(50);
 
-        const customerNotifs = await CustomerNotification.find({ isSend: false })
-        .sort({ createdAt: 1 })
-        .limit(50);
+    for (const notif of customerNotifs) {
+      const customer = await Customer.findById(notif.customerId);
+      if (!customer || !customer.fcmToken) continue;
 
-        for(const notif of customerNotifs){
-            const customer = await Customer.findById(notif.customerId);
-            if (!customer || !customer.fcmToken) continue;
+      try {
+        await sendPushNotification(customer.fcmToken, {
+          title: notif.title,
+          body: notif.body,
+          image: notif.image,
+          data: {
+            type: "customer_notification",
+            notificationId: notif._id.toString(),
+          },
+        });
 
-            try {
-                await sendPushNotification(customer.fcmToken, {
-                    title: notif.title,
-                    body: notif.body,
-                    image: notif.image,
-                    data: {
-                        type: "customer_notification",
-                        notificationId: notif._id.toString(),
-                    },
-                    });
-
-                notif.isSend = true;
-                await notif.save();
-            } catch (err) {
-                console.error(`FCM failed for customer ${customer._id}:`, err.message);
-            }
-        }
-
-        // ------------------------- Seller Notifications -------------------------
-        const sellerNotifs = await SellerNotification.find({ isSend: false })
-        .sort({ createdAt: 1 })
-        .limit(50);
-
-        for (const notif of sellerNotifs) {
-            const seller = await SellerUserAuth.findById(notif.sellerId);
-            if (!seller || !seller.fcmToken) continue;
-
-            try {
-                await sendPushNotification(seller.fcmToken, {
-                    title: notif.title,
-                    body: notif.body,
-                    image: notif.image,
-                    data: {
-                        type: "seller_notification",
-                        notificationId: notif._id.toString(),
-                    },
-                });                
-                notif.isSend = true;
-                await notif.save();
-            } catch (err) {
-                console.error(`FCM failed for seller ${seller._id}:`, err.message);
-            }
-        }
-
-    console.log("Notification cron executed successfully ✅");
-
-    } catch (error) {
-        console.error("Cron error:", err);
+        notif.isSend = true;
+        await notif.save();
+        customerSuccessCount++;
+      } catch (err) {
+        console.error(`FCM failed for customer ${customer._id}:`, err.message);
+      }
     }
-}
+
+    // ------------------------- Seller Notifications -------------------------
+    const sellerNotifs = await SellerNotification.find({ isSend: false })
+      .sort({ createdAt: 1 })
+      .limit(50);
+
+    for (const notif of sellerNotifs) {
+      const seller = await SellerUserAuth.findById(notif.sellerId);
+      if (!seller || !seller.fcmToken) continue;
+
+      try {
+        await sendPushNotification(seller.fcmToken, {
+          title: notif.title,
+          body: notif.body,
+          image: notif.image,
+          data: {
+            type: "seller_notification",
+            notificationId: notif._id.toString(),
+          },
+        });
+        notif.isSend = true;
+        await notif.save();
+        sellerSuccessCount++;
+      } catch (err) {
+        console.error(`FCM failed for seller ${seller._id}:`, err.message);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notifications sent successfully",
+      data: {
+        customersNotified: customerSuccessCount,
+        sellersNotified: sellerSuccessCount,
+      },
+    });
+  } catch (error) {
+    console.error("Cron error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send notifications",
+      error: err.message,
+    });
+  }
+};

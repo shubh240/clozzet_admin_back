@@ -8,10 +8,10 @@ import upload from "../middleware/multer.middleware.js";
 
 const router = express.Router();
 
-router.post("/",isSuperAdminAuthenticated,  upload.fields([
+router.post("/store",isSuperAdminAuthenticated,  upload.fields([
     { name: "image", maxCount: 1 }
   ]), sendNotification);
 
-router.post("/send-push" ,sendPushNoti);
+router.get("/send-push" ,sendPushNoti);
 
 export default router;
