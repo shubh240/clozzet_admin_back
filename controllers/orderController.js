@@ -24,7 +24,7 @@ import mongoose from 'mongoose';
  */
 export const listOrders = async (req, res) => {
   try {
-    const { page, limit, customerId, sellerId, storeId, search } = req.body;
+    const { page, limit, customerId, sellerId, storeId, search,startDate, endDate, status } = req.body;
     const match = {};
 
     if (customerId) match.customerId = customerId;
@@ -33,6 +33,15 @@ export const listOrders = async (req, res) => {
 
     if (search) {
       match.orderNumber = { $regex: search, $options: "i" };
+    }
+    if (startDate && endDate) {
+      match.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999)),
+      };
+    }
+    if (status) {
+      match.orderStatus = status;
     }
     let total = await Order.countDocuments(match);
 
@@ -53,7 +62,12 @@ export const listOrders = async (req, res) => {
     const orders = await ordersQuery;
 
     if (!orders.length) {
-      return sendResponse(res, 400, false, "No orders found");
+      return sendResponse(res, 200, true, "No orders found", {
+        orders: [],
+        ...(page && limit
+          ? { totalOrders: 0, totalPages: 0, currentPage: parseInt(page) }
+          : {}),
+      });
     }
 
     const ordersWithDetails = await Promise.all(

@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
+    cartId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Cart",
+    },
     storeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "StoreInfo",
@@ -43,6 +47,11 @@ const orderSchema = new mongoose.Schema(
     paymentError: {
       type: String,
     },
+    orderStatus: {
+      type: String,
+      // enum: ["Pending", "Accepted", "Rejected", "Processing", "Partner Assigned", "Out For Delivery", "Delivered", "Shipment Cancelled", "Return Initiated"],
+      default: "Pending",
+    },
     subTotalAmount: {
       type: Number,
       required: true,
@@ -63,6 +72,8 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    discountAmount: { type: Number, default: 0 },
+    couponCode: { type: String, default: null }, 
     totalAmount: {
       type: Number,
       required: true,
@@ -74,28 +85,8 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "INR",
     },
-    isCancelled: {
-      type: Boolean,
-      default: false,
-    },
-    cancelledBy: {
-      type: String,
-      // enum: ["customer", "seller", null],
-      default: null,
-    },
-    cancelledReason: {
-      type: String,
-    },
-    cancelledAt: {
+    deliveredTime: {
       type: Date,
-    },
-    isRefunded: {
-      type: Boolean,
-      default: false,
-    },
-    refundStatus: {
-      type: String,
-      // enum: ["Pending", "Success", "Failed",null],
       default: null,
     },
   },
