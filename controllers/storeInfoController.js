@@ -336,8 +336,11 @@ export const updateStore = async (req, res) => {
 export const getStores = async (req, res) => {
   try {
     let filter = { is_deleted: false };
-    const { isCustomer, search = "", zone = "", page, limit } = req.query;
-
+    const { isCustomer, search = "", zone = "", page, limit,startDate,endDate,status } = req.query;
+    console.log('status',status)
+    if (startDate && !endDate) {
+      return sendResponse(res, 400, false, "Please select an end date when start date is provided");
+    }
     if (isCustomer) {
       filter.isActive = true;
     }
@@ -348,6 +351,19 @@ export const getStores = async (req, res) => {
 
     if (zone) {
       filter.zone = zone;
+    }
+
+    if (startDate && endDate) {
+      filter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999)),
+      };
+    }
+
+    if (!isCustomer && status === "1") {
+      filter.isActive = true;
+    } else if (!isCustomer && status === "0") {
+      filter.isActive = false;
     }
 
     const skip = (page - 1) * limit;
