@@ -14,6 +14,7 @@ import advertisementRoute from "./routes/advertisementRoute.js"
 import configRoute from "./routes/configRoute.js"
 import orderRoute from "./routes/orderRoute.js"
 import colorRoute from "./routes/colorRoute.js"
+import customerRoute from "./routes/customerRoute.js"
 import contentRoute from "./routes/contentRoute.js"
 import path from "path";
 import fs from "fs";
@@ -77,6 +78,7 @@ app.use("/api/v1/content",contentRoute);
 app.use("/api/v1/config",configRoute);
 app.use("/api/v1/order",orderRoute);
 app.use("/api/v1/color",colorRoute);
+app.use("/api/v1/customer",customerRoute);
 
 
 
