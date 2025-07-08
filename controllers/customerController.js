@@ -13,11 +13,6 @@ export const listCustomers = async (req, res) => {
       endDate,
     } = req.body;
 
-    // ✅ Safe defaults with optional check
-    const pageNumber = Math.max(parseInt(page) || 1, 1);
-    const limitNumber = Math.max(parseInt(limit) || 10, 1);
-    const skip = (pageNumber - 1) * limitNumber;
-
     const matchStage = {};
 
     // 🔍 Search by name, email, or mobile
@@ -52,18 +47,25 @@ export const listCustomers = async (req, res) => {
         },
       },
       { $sort: { createdAt: -1 } },
-      { $skip: skip },
-      { $limit: limitNumber },
     ];
 
+    let total = await Customer.countDocuments(matchStage);
+
+    // 📦 Optional Pagination
+    let paginated = false;
+    if (page && limit) {
+      paginated = true;
+      const pageNumber = Math.max(parseInt(page), 1);
+      const limitNumber = Math.max(parseInt(limit), 1);
+      const skip = (pageNumber - 1) * limitNumber;
+      pipeline.push({ $skip: skip }, { $limit: limitNumber });
+    }
+
     const customers = await Customer.aggregate(pipeline);
-    const total = await Customer.countDocuments(matchStage);
 
     return sendResponse(res, 200, true, "Customers fetched successfully", {
       customers,
-      total,
-      page: pageNumber,
-      limit: limitNumber,
+      ...(paginated && { total, page: parseInt(page), limit: parseInt(limit) }),
     });
   } catch (err) {
     console.error("Error in listCustomers:", err);
