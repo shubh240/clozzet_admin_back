@@ -93,13 +93,28 @@ const sendPushAndSaveNotification = async (token, payload, userType, userId) => 
 };
 
 export const sendSellerNotification = async (token, payload, sellerId) => {
-  return sendPushAndSaveNotification(token, payload, "seller", sellerId);
+  try {
+    await sendPushAndSaveNotification(token, payload, "seller", sellerId);
+  } catch (error) {
+    console.error("Failed to send seller notification:", error.message);
+  }
 };
 
 export const sendCustomerNotification = async (token, payload, customerId) => {
-  return sendPushAndSaveNotification(token, payload, "customer", customerId);
+  try {
+    await sendPushAndSaveNotification(token, payload, "customer", customerId);
+  } catch (error) {
+    console.error("Failed to send customer notification:", error.message);
+  }
 };
 
+// export const sendSellerNotification = async (token, payload, sellerId) => {
+//   return sendPushAndSaveNotification(token, payload, "seller", sellerId);
+// };
+
+// export const sendCustomerNotification = async (token, payload, customerId) => {
+//   return sendPushAndSaveNotification(token, payload, "customer", customerId);
+// };
 // await sendSellerNotification(seller.fcmToken, {
 //   title: "New Order",
 //   body: "You received a new order!",
